@@ -1,6 +1,6 @@
 Enunciado del reto
 
-Una empresa de transporte ha desarrollado un sistema para procesar pagos de sus clientes. Inicialmente, solo aceptaban pagos con tarjeta de crédito, pero ahora desean agregar soporte para PayPal y criptomonedas.
+Una empresa de transporte ha desarrollado un sistema para procesar pagos de sus clientes. Inicialmente, solo aceptaban pagos con tarjeta de crédito, pero ahora desean agregar soporte criptomonedas.
 Actualmente, la clase ProcesadorPagos está acoplada a la clase PagoTarjeta, lo que hace difícil agregar nuevas formas de pago sin modificar su código.
 
 Modificar las dos clases concretas:
