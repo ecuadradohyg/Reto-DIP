@@ -17,11 +17,6 @@ class Reservation:
         self.room = room
         self.check_in_date = check_in_date
         self.check_out_date = check_out_date
-    
-    # Incumple el principio: La responsabilidad de calcular el costo total de una reserva está fuera de la clase Reservation.
-    def calculate_reservation_cost(reservation):
-        nights = (reservation.check_out_date - reservation.check_in_date).days
-        return reservation.room.price_per_night * nights
 
 class Hotel:
     def __init__(self, name):
@@ -29,7 +24,12 @@ class Hotel:
         self.rooms = []
         self.reservations = []
 
-    # Incumple el principio: La responsabilidad de buscar habitaciones disponibles está fuera de la clase Hotel.
+# La siguiente clase inclumple el principio por tener responsabilidades que corresponden a Reservation y Hotel respectivamente
+class Operations:
+    def calculate_reservation_cost(reservation):
+        nights = (reservation.check_out_date - reservation.check_in_date).days
+        return reservation.room.price_per_night * nights
+
     def find_available_rooms(hotel, check_in_date, check_out_date):
         reserved_rooms = set()
         for reservation in hotel.reservations:
