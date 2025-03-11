@@ -1,77 +1,98 @@
-/*Para aplicar el principio de responsabilidad unica se debe definir tres clases concretas que tendrán como unica responsabilidad trabajar con su respectivo objeto */
+/* Para aplicar el principio de responsabilidad unica se debe definir tres clases concretas que tendrán como unica responsabilidad trabajar con su respectivo objeto */
 
 using System;
 using System.Collections.Generic;
 
-class Program
+// Clase que gestiona los libros
+class BookManager
 {
-    public static void Main(string[] args)
+    private List<string[]> books;
+
+    public BookManager()
     {
-        Library library = new Library("libro1", "autor", 12, "nombre", "id", "email");
+        books = new List<string[]>();
     }
-}
-
-class Library
-{
-    public Library(string title, string author, int copies, string name, string id, string email)
-    {
-        BooksRepository book = new BooksRepository();
-        book.books = new List<string>();
-        book.AddBook(title, author, copies);
-        Console.WriteLine("Libros: " + book.books.);
-
-        UsersRepository user = new UsersRepository();
-        user.users = new List<string>();
-        user.AddUser(name, id, email);
-        Console.WriteLine("Usuarios: " + user.users);
-
-        LoansRepository loan = new LoansRepository();
-        loan.loans = new List<string>();
-    }
-}
-
-// Clase con la responsabilidad de gestionar libros
-class BooksRepository
-{
-    public List<string> books;
 
     public void AddBook(string title, string author, int copies)
     {
-        books.Add(title);
-        books.Add(author);
-        books.Add(copies.ToString());
+        books.Add(new string[] { title, author, copies.ToString() });
+    }
+
+    // Este método se ejecuta si se presta o se devuelve un libro
+    public bool UpdateCopies(string title, int change)
+    {
+        // Recorrer lisa de libros
+        foreach (var book in books)
+        {
+            if (book[0] == title)
+            {
+                int currentCopies = int.Parse(book[2]);
+                if (currentCopies + change >= 0)
+                {
+                    book[2] = (currentCopies + change).ToString();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public bool BookExists(string title)
+    {
+        return books.Exists(book => book[0] == title);
     }
 }
 
-// Clase con la responsabilidad de gestionar usuarios
-class UsersRepository
+// Clase que gestiona los usuarios
+class UserManager
 {
-    public List<string> users;
+    private List<string[]> users;
+
+    public UserManager()
+    {
+        users = new List<string[]>();
+    }
 
     public void AddUser(string name, string id, string email)
     {
-        users.Add(name);
-        users.Add(id);
-        users.Add(email);
+        users.Add(new string[] { name, id, email });
     }
 }
 
-// Clase con la responabilidad unica de realizar prestamos de libros
-class LoansRepository
+// Clase que gestiona los préstamos
+class LoanManager
 {
-    public List<string> loans;
+    // Lista de préstamos
+    private List<string[]> loans;
+    private BookManager bookManager;
 
-    BooksRepository book = new BooksRepository();
+    public LoanManager(BookManager bookManager)
+    {
+        this.bookManager = bookManager;
+        loans = new List<string[]>();
+    }
 
+    // Prestar libro
     public bool LoanBook(string userId, string bookTitle)
     {
-        foreach (var book in book.books)
+        if (bookManager.UpdateCopies(bookTitle, -1))
         {
-            if (book[0].ToString() == bookTitle && int.Parse(book[2].ToString()) > 0)
+            loans.Add(new string[] { userId, bookTitle });
+            return true;
+        }
+        return false;
+    }
+
+    // Devolver libro
+    public bool ReturnBook(string userId, string bookTitle)
+    {
+        // Para cada número de préstamos realizados
+        for (int i = 0; i < loans.Count; i++)
+        {
+            if (loans[i][0] == userId && loans[i][1] == bookTitle)
             {
-                string copies = book[2].ToString();
-                copies = (int.Parse(book[2].ToString()) - 1).ToString();
-                loans.Add(userId);
+                loans.RemoveAt(i);
+                bookManager.UpdateCopies(bookTitle, 1);
                 return true;
             }
         }
@@ -79,31 +100,60 @@ class LoansRepository
     }
 }
 
-// Clase con la unica responsablilidad de la devolucion de libros
-class ReturnsRepository
+// Clase Library que ahora actúa como intermediaria
+class Library
 {
-    LoansRepository loan = new LoansRepository();
+    // Crear los objetos para cada clase que tiene una única responsabilidad
+    private BookManager bookManager;
+    private UserManager userManager;
+    private LoanManager loanManager;
 
-    BooksRepository book = new BooksRepository();
+    // Constructor
+    public Library()
+    {
+        bookManager = new BookManager();
+        userManager = new UserManager();
+        loanManager = new LoanManager(bookManager);
+    }
+
+    public void AddBook(string title, string author, int copies)
+    {
+        bookManager.AddBook(title, author, copies);
+    }
+
+    public void AddUser(string name, string id, string email)
+    {
+        userManager.AddUser(name, id, email);
+    }
+
+    public bool LoanBook(string userId, string bookTitle)
+    {
+        return loanManager.LoanBook(userId, bookTitle);
+    }
 
     public bool ReturnBook(string userId, string bookTitle)
     {
-        for (int i = 0; i < loan.loans.Count; i++)
-        {
-            if (loan.loans[i][0].ToString() == userId && loan.loans[i][1].ToString() == bookTitle)
-            {
-                loan.loans.RemoveAt(i);
-                foreach (var book in book.books)
-                {
-                    if (book[0].ToString() == bookTitle)
-                    {
-                        string copies = book[2].ToString();
-                        copies = (int.Parse(book[2].ToString()) + 1).ToString();
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
+        return loanManager.ReturnBook(userId, bookTitle);
+    }
+}
+
+// Clase con método principal
+class Program
+{
+    static void Main(string[] args)
+    {
+        Library library = new Library();
+        library.AddUser("Jose", "U123", "jose@email.com");
+        library.AddBook("libro1", "autor1", 3);
+
+        if (library.LoanBook("U123", "libro1"))
+            Console.WriteLine("Préstamo exitoso.");
+        else
+            Console.WriteLine("No se pudo realizar el préstamo");
+
+        if (library.ReturnBook("U123", "libro1"))
+            Console.WriteLine("Devolución exitosa.");
+        else
+            Console.WriteLine("No se pudo devolver el libro");
     }
 }
