@@ -1,3 +1,6 @@
+# Para aplicar el principio de Information Expert, debíamos mover los métodos
+# a las clases que tienen la información necesaria para cumplir con su responsabilidad.
+
 from datetime import date
 
 class Room:
